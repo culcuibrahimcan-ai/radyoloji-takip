@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RadAsistan">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e17">
+<title>RadAsistan</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0e17; --surface:#111827; --surface2:#1a2235; --border:#1e2d45;
+    --accent:#00c2ff; --accent2:#7c3aed; --accent3:#10b981;
+    --warn:#f59e0b; --danger:#ef4444; --text:#e2e8f0; --muted:#64748b;
+    --ct:#00c2ff; --usg:#10b981; --mr:#a78bfa; --cr:#fbbf24;
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+  input { -webkit-user-select:text; user-select:text; }
+  html { height:100%; overflow:hidden; position:fixed; width:100%; }
+  body { height:100%; width:100%; background:var(--bg); color:var(--text); font-family:'Syne',-apple-system,BlinkMacSystemFont,sans-serif; overflow:hidden; position:fixed; -webkit-text-size-adjust:100%; }
+
+  .app { display:flex; flex-direction:column; height:100%; width:100%; max-width:430px; margin:0 auto; padding-top:var(--sat); }
+
+  /* TOPBAR */
+  .topbar { padding:14px 20px 12px; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; z-index:10; }
+  .topbar-title { font-size:18px; font-weight:800; letter-spacing:-0.5px; }
+  .topbar-title span { color:var(--accent); }
+  .topbar-badge { background:var(--accent2); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; font-family:'DM Mono',monospace; }
+
+  /* PAGES */
+  .pages { flex:1; overflow:hidden; position:relative; min-height:0; }
+  .page { position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; padding:16px 16px 24px; transition:transform 0.3s cubic-bezier(.4,0,.2,1),opacity 0.25s; will-change:transform; }
+  .page.hidden { transform:translateX(100%); opacity:0; pointer-events:none; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { flex-shrink:0; display:flex; background:var(--surface); border-top:1px solid var(--border); z-index:20; padding-bottom:var(--sab); }
+  .nav-btn { flex:1; border:none; background:transparent; color:var(--muted); padding:10px 0 8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; font-family:'Syne',sans-serif; font-size:10px; font-weight:600; transition:color 0.15s; min-height:44px; }
+  .nav-btn.active { color:var(--accent); }
+  .nav-btn svg { width:22px; height:22px; }
+
+  .section-title { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin:20px 0 10px; }
+  .section-title:first-child { margin-top:0; }
+
+  /* STATS */
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; position:relative; overflow:hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; }
+  .stat-card.ct::before{background:var(--ct)} .stat-card.usg::before{background:var(--usg)} .stat-card.mr::before{background:var(--mr)} .stat-card.cr::before{background:var(--cr)}
+  .stat-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .stat-value { font-family:'DM Mono',monospace; font-size:30px; font-weight:500; line-height:1; }
+  .stat-card.ct .stat-value{color:var(--ct)} .stat-card.usg .stat-value{color:var(--usg)} .stat-card.mr .stat-value{color:var(--mr)} .stat-card.cr .stat-value{color:var(--cr)}
+  .stat-sub { font-size:11px; color:var(--muted); margin-top:4px; font-family:'DM Mono',monospace; }
+
+  .total-card { background:linear-gradient(135deg,var(--surface2) 0%,#0f1a2e 100%); border:1px solid var(--border); border-radius:14px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .total-card-label { font-size:12px; font-weight:700; color:var(--muted); }
+  .total-card-val { font-family:'DM Mono',monospace; font-size:26px; color:var(--text); }
+
+  .rot-grid { display:flex; flex-direction:column; gap:8px; }
+  .rot-row { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .rot-name { font-weight:700; font-size:14px; }
+  .rot-months { font-family:'DM Mono',monospace; font-size:20px; color:var(--accent2); }
+  .rot-months span { font-size:12px; color:var(--muted); }
+
+  .prog-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .prog-name { font-size:12px; font-weight:700; width:90px; flex-shrink:0; }
+  .prog-bar-bg { flex:1; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+  .prog-bar { height:100%; border-radius:4px; transition:width 0.7s cubic-bezier(.4,0,.2,1); }
+  .prog-val { font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); width:44px; text-align:right; flex-shrink:0; }
+
+  /* FORM */
+  .form-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; margin-bottom:12px; }
+  .form-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; display:block; }
+
+  .month-scroll { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .month-scroll::-webkit-scrollbar { display:none; }
+  .month-chip { flex-shrink:0; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:9px 14px; font-size:12px; font-family:'DM Mono',monospace; cursor:pointer; color:var(--muted); white-space:nowrap; min-height:38px; display:flex; align-items:center; transition:background 0.1s,color 0.1s,border-color 0.1s; }
+  .month-chip:active { opacity:.7; }
+  .month-chip.selected { background:var(--accent); color:#000; border-color:var(--accent); font-weight:700; }
+  .month-chip.has-data { border-color:var(--accent2); color:var(--accent2); }
+  .month-chip.has-data.selected { background:var(--accent); color:#000; border-color:var(--accent); }
+
+  .rot-options { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; }
+  .rot-option { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:11px 4px; font-size:12px; font-weight:700; text-align:center; cursor:pointer; color:var(--muted); min-height:44px; display:flex; align-items:center; justify-content:center; transition:background 0.1s,color 0.1s; }
+  .rot-option:active { opacity:.7; }
+  .rot-option.selected { background:var(--accent2); color:#fff; border-color:var(--accent2); }
+
+  /* iOS-style toggle */
+  .toggle-wrap { padding:10px 0; cursor:pointer; display:flex; align-items:center; gap:12px; margin-top:6px; }
+  .toggle-track { width:51px; height:31px; background:#3a3a3c; border-radius:16px; position:relative; transition:background 0.2s; flex-shrink:0; }
+  .toggle-track.on { background:var(--warn); }
+  .toggle-thumb { position:absolute; top:2px; left:2px; width:27px; height:27px; background:#fff; border-radius:50%; transition:transform 0.2s cubic-bezier(.4,0,.2,1); box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  .toggle-track.on .toggle-thumb { transform:translateX(20px); }
+  .toggle-label { font-size:14px; font-weight:600; color:var(--text); }
+  .toggle-sub { font-size:11px; color:var(--muted); margin-left:auto; font-family:'DM Mono'; }
+
+  .mod-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mod-input-label { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:12px; font-weight:700; }
+  .mod-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .mod-input {
+    width:100%; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px;
+    padding:13px 10px; color:var(--text); font-family:'DM Mono',monospace; font-size:24px;
+    text-align:center; outline:none;
+    /* iOS critical resets */
+    -webkit-appearance:none; appearance:none;
+    transition:border-color 0.15s; min-height:54px;
+  }
+  .mod-input:focus { border-color:var(--accent); }
+  .mod-input.ct:focus{border-color:var(--ct)} .mod-input.usg:focus{border-color:var(--usg)} .mod-input.mr:focus{border-color:var(--mr)} .mod-input.cr:focus{border-color:var(--cr)}
+
+  .save-btn { width:100%; background:linear-gradient(135deg,var(--accent),#0080cc); border:none; border-radius:14px; color:#000; font-family:'Syne',sans-serif; font-size:16px; font-weight:800; padding:17px; cursor:pointer; letter-spacing:.5px; margin-top:4px; -webkit-appearance:none; appearance:none; min-height:54px; transition:opacity 0.15s; }
+  .save-btn:active { opacity:.75; }
+
+  /* TABLE */
+  .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .data-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .data-table th { background:var(--surface2); color:var(--muted); padding:8px 10px; text-align:left; font-size:10px; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--border); font-family:'DM Mono',monospace; white-space:nowrap; }
+  .data-table td { padding:11px 10px; border-bottom:1px solid var(--border); font-family:'DM Mono',monospace; vertical-align:middle; }
+  .data-table tr:last-child td { border-bottom:none; }
+  .rot-pill { display:inline-block; background:var(--surface2); border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; color:var(--accent2); font-family:'Syne',sans-serif; }
+  .rot-pill.half { color:var(--warn); }
+  .num-ct{color:var(--ct)} .num-usg{color:var(--usg)} .num-mr{color:var(--mr)} .num-cr{color:var(--cr)} .num-zero{color:var(--border)}
+  .del-btn { background:none; border:none; color:var(--muted); cursor:pointer; padding:8px; border-radius:8px; font-size:14px; min-width:36px; min-height:36px; display:flex; align-items:center; justify-content:center; }
+  .del-btn:active { color:var(--danger); background:rgba(239,68,68,.1); }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:calc(var(--sab) + 80px); left:50%; transform:translateX(-50%) translateY(16px); background:var(--accent3); color:#fff; padding:11px 22px; border-radius:20px; font-size:13px; font-weight:700; opacity:0; transition:all 0.25s; pointer-events:none; z-index:200; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,.5); }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.error { background:var(--danger); }
+
+  /* INSTALL BANNER */
+  .install-banner { background:var(--surface2); border:1px solid var(--accent2); border-radius:12px; padding:12px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text); line-height:1.5; }
+  .install-banner strong { color:var(--accent2); display:block; }
+  .install-close { background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px; margin-left:auto; flex-shrink:0; min-width:32px; min-height:32px; display:flex; align-items:center; justify-content:center; }
+
+  ::-webkit-scrollbar { width:0; height:0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-title">Rad<span>Asistan</span></div>
+    <div class="topbar-badge" id="totalCount">— vaka</div>
+  </div>
+
+  <div class="pages">
+    <!-- DASHBOARD -->
+    <div class="page" id="page-dash">
+      <div id="install-banner" class="install-banner" style="display:none">
+        <div style="font-size:24px">🩻</div>
+        <div><strong>Ana Ekrana Ekle</strong>Safari'de <b>Paylaş ↑</b> → "Ana Ekrana Ekle" ile uygulamaya dönüştür</div>
+        <button class="install-close" onclick="dismissBanner()">✕</button>
+      </div>
+      <div class="section-title">📊 Modalite Toplamları</div>
+      <div class="stats-grid">
+        <div class="stat-card ct"><div class="stat-label">CT</div><div class="stat-value" id="total-ct">0</div><div class="stat-sub">tetkik</div></div>
+        <div class="stat-card usg"><div class="stat-label">USG</div><div class="stat-value" id="total-usg">0</div><div class="stat-sub">tetkik</div></div>
+        <div class="stat-card mr"><div class="stat-label">MR</div><div class="stat-value" id="total-mr">0</div><div class="stat-sub">tetkik</div></div>
+        <div class="stat-card cr"><div class="stat-label">CR</div><div class="stat-value" id="total-cr">0</div><div class="stat-sub">tetkik</div></div>
+      </div>
+      <div class="total-card">
+        <div><div class="total-card-label">TOPLAM VAKA</div><div style="font-size:11px;color:var(--muted);margin-top:2px">tüm modaliteler</div></div>
+        <div class="total-card-val" id="grand-total">0</div>
+      </div>
+      <div class="section-title" style="margin-top:22px">🏥 Rotasyon Süreleri</div>
+      <div class="rot-grid" id="rot-summary"></div>
+      <div class="section-title" style="margin-top:22px">📈 Dağılım</div>
+      <div id="mod-bars"></div>
+    </div>
+
+    <!-- DATA ENTRY -->
+    <div class="page hidden" id="page-entry">
+      <div class="form-card">
+        <label class="form-label">📅 Ay</label>
+        <div class="month-scroll" id="month-scroll"></div>
+      </div>
+      <div class="form-card">
+        <label class="form-label">🔬 Rotasyon</label>
+        <div class="rot-options" id="rot-options"></div>
+        <div class="toggle-wrap" onclick="toggleHalf()">
+          <div class="toggle-track" id="half-toggle"><div class="toggle-thumb"></div></div>
+          <div class="toggle-label">Yarım Ay</div>
+          <div class="toggle-sub" id="half-label">tam ay</div>
+        </div>
+      </div>
+      <div class="form-card">
+        <label class="form-label">📋 Vaka Sayıları</label>
+        <div class="mod-grid">
+          <div><div class="mod-input-label"><div class="mod-dot" style="background:var(--ct)"></div>CT</div><input type="number" inputmode="numeric" pattern="[0-9]*" class="mod-input ct" id="inp-ct" placeholder="0" min="0" autocomplete="off"></div>
+          <div><div class="mod-input-label"><div class="mod-dot" style="background:var(--usg)"></div>USG</div><input type="number" inputmode="numeric" pattern="[0-9]*" class="mod-input usg" id="inp-usg" placeholder="0" min="0" autocomplete="off"></div>
+          <div><div class="mod-input-label"><div class="mod-dot" style="background:var(--mr)"></div>MR</div><input type="number" inputmode="numeric" pattern="[0-9]*" class="mod-input mr" id="inp-mr" placeholder="0" min="0" autocomplete="off"></div>
+          <div><div class="mod-input-label"><div class="mod-dot" style="background:var(--cr)"></div>CR</div><input type="number" inputmode="numeric" pattern="[0-9]*" class="mod-input cr" id="inp-cr" placeholder="0" min="0" autocomplete="off"></div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveEntry()">💾 Kaydet</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="page hidden" id="page-table">
+      <div class="section-title">📋 Tüm Kayıtlar</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>AY</th><th>ROTASYON</th><th>CT</th><th>USG</th><th>MR</th><th>CR</th><th></th></tr></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-dash" onclick="showPage('dash')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Panel
+    </button>
+    <button class="nav-btn" id="nav-entry" onclick="showPage('entry')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Veri Gir
+    </button>
+    <button class="nav-btn" id="nav-table" onclick="showPage('table')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Kayıtlar
+    </button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const ROTATIONS=['Toraks','Nöro','Abdomen','USG','Kas iskelet','Meme','Girişimsel'];
+const ROT_COLORS={'Toraks':'#00c2ff','Nöro':'#a78bfa','Abdomen':'#10b981','USG':'#fbbf24','Kas iskelet':'#f97316','Meme':'#ec4899','Girişimsel':'#6ee7b7'};
+const DEFAULT_DATA=[
+  {month:'2024-09',rotation:'Toraks',half:true, ct:0,  usg:0,mr:0,  cr:0},
+  {month:'2024-10',rotation:'Toraks',half:false,ct:0,  usg:0,mr:0,  cr:0},
+  {month:'2024-11',rotation:'Toraks',half:false,ct:413,usg:0,mr:0,  cr:4},
+  {month:'2024-12',rotation:'Nöro',  half:false,ct:487,usg:0,mr:0,  cr:0},
+  {month:'2025-01',rotation:'Nöro',  half:false,ct:625,usg:0,mr:0,  cr:2},
+  {month:'2025-02',rotation:'Abdomen',half:false,ct:119,usg:0,mr:0, cr:0},
+  {month:'2025-03',rotation:'USG',   half:false,ct:0,  usg:0,mr:0,  cr:31},
+  {month:'2025-04',rotation:'USG',   half:false,ct:0,  usg:0,mr:0,  cr:0},
+  {month:'2025-05',rotation:'Abdomen',half:false,ct:791,usg:0,mr:0, cr:3},
+  {month:'2025-06',rotation:'USG',   half:true, ct:45, usg:0,mr:0,  cr:6},
+  {month:'2025-07',rotation:'Nöro',  half:false,ct:743,usg:0,mr:122,cr:0},
+  {month:'2025-08',rotation:'Kas iskelet',half:false,ct:47,usg:0,mr:0,cr:0},
+  {month:'2025-09',rotation:'Toraks',half:false,ct:495,usg:0,mr:0,  cr:48},
+  {month:'2025-10',rotation:'USG',   half:false,ct:7,  usg:0,mr:0,  cr:0},
+  {month:'2025-11',rotation:'USG',   half:false,ct:29, usg:2,mr:2,  cr:4},
+  {month:'2025-12',rotation:'Nöro',  half:false,ct:943,usg:0,mr:140,cr:10},
+  {month:'2026-01',rotation:'Abdomen',half:false,ct:1007,usg:0,mr:0,cr:3},
+  {month:'2026-02',rotation:'Nöro',  half:false,ct:600,usg:0,mr:90, cr:0},
+  {month:'2026-03',rotation:'Nöro',  half:false,ct:0,  usg:0,mr:0,  cr:0},
+];
+
+function loadData(){try{const s=localStorage.getItem('radAsistan_v3');return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_DATA));}catch{return JSON.parse(JSON.stringify(DEFAULT_DATA));}}
+function saveData(d){try{localStorage.setItem('radAsistan_v3',JSON.stringify(d));}catch{}}
+let data=loadData();
+
+function calcTotals(){return{ct:data.reduce((s,r)=>s+(r.ct||0),0),usg:data.reduce((s,r)=>s+(r.usg||0),0),mr:data.reduce((s,r)=>s+(r.mr||0),0),cr:data.reduce((s,r)=>s+(r.cr||0),0)};}
+function calcRotMonths(rot){const f=data.filter(r=>r.rotation===rot&&!r.half).length,h=data.filter(r=>r.rotation===rot&&r.half).length;return f+h*0.5;}
+function fmtMonth(m){const[y,mo]=m.split('-');const n=['','Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];return n[parseInt(mo)]+'.'+y.slice(2);}
+
+let toastTimer;
+function showToast(msg,err=false){clearTimeout(toastTimer);const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' error':'');toastTimer=setTimeout(()=>t.className='toast',2600);}
+
+function initInstallBanner(){const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),standalone=window.navigator.standalone===true,dismissed=localStorage.getItem('rad_banner');if(isIOS&&!standalone&&!dismissed)document.getElementById('install-banner').style.display='flex';}
+function dismissBanner(){document.getElementById('install-banner').style.display='none';localStorage.setItem('rad_banner','1');}
+
+function showPage(p){['dash','entry','table'].forEach(id=>{const el=document.getElementById('page-'+id),nav=document.getElementById('nav-'+id);if(id===p){el.className='page';nav.className='nav-btn active';}else{el.className='page hidden';nav.className='nav-btn';}});if(p==='dash')renderDashboard();if(p==='entry')renderEntry();if(p==='table')renderTable();}
+
+function renderDashboard(){
+  const t=calcTotals(),grand=t.ct+t.usg+t.mr+t.cr;
+  document.getElementById('total-ct').textContent=t.ct.toLocaleString('tr');
+  document.getElementById('total-usg').textContent=t.usg.toLocaleString('tr');
+  document.getElementById('total-mr').textContent=t.mr.toLocaleString('tr');
+  document.getElementById('total-cr').textContent=t.cr.toLocaleString('tr');
+  document.getElementById('grand-total').textContent=grand.toLocaleString('tr');
+  document.getElementById('totalCount').textContent=grand.toLocaleString('tr')+' vaka';
+  const rd=ROTATIONS.map(r=>({name:r,months:calcRotMonths(r)})).filter(r=>r.months>0);
+  document.getElementById('rot-summary').innerHTML=rd.length?rd.map(r=>`<div class="rot-row"><div><div class="rot-name" style="color:${ROT_COLORS[r.name]||'var(--text)'}">${r.name}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">rotasyonu</div></div><div class="rot-months">${r.months%1===0?r.months:r.months.toFixed(1)} <span>ay</span></div></div>`).join(''):'<div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">Henüz rotasyon verisi yok</div>';
+  const mods=[{name:'CT',val:t.ct,color:'var(--ct)'},{name:'USG',val:t.usg,color:'var(--usg)'},{name:'MR',val:t.mr,color:'var(--mr)'},{name:'CR',val:t.cr,color:'var(--cr)'}];
+  const maxV=Math.max(...mods.map(m=>m.val),1);
+  document.getElementById('mod-bars').innerHTML=mods.map(m=>`<div class="prog-row"><div class="prog-name" style="color:${m.color};font-family:'DM Mono',monospace">${m.name}</div><div class="prog-bar-bg"><div class="prog-bar" style="width:${(m.val/maxV*100).toFixed(1)}%;background:${m.color}"></div></div><div class="prog-val">${m.val.toLocaleString('tr')}</div></div>`).join('');
+}
+
+let selMonth=null,selRot=null,isHalf=false;
+function generateMonths(){const m=[],now=new Date();for(let i=-18;i<=12;i++){const d=new Date(now.getFullYear(),now.getMonth()+i,1);m.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}return m;}
+
+function renderEntry(){
+  const months=generateMonths(),nowKey=new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+  if(!selMonth)selMonth=nowKey;
+  const scroll=document.getElementById('month-scroll');
+  scroll.innerHTML=months.map(m=>{const hd=data.some(r=>r.month===m),isSel=m===selMonth;return`<div class="month-chip${isSel?' selected':''}${hd&&!isSel?' has-data':''}" onclick="selectMonth('${m}')">${fmtMonth(m)}</div>`;}).join('');
+  requestAnimationFrame(()=>{const chips=scroll.querySelectorAll('.month-chip'),idx=months.indexOf(selMonth);if(chips[idx])chips[idx].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});});
+  document.getElementById('rot-options').innerHTML=ROTATIONS.map(r=>`<div class="rot-option${selRot===r?' selected':''}" onclick="selectRot('${r}')">${r}</div>`).join('');
+  updateHalfUI();loadExistingEntry();
+}
+function selectMonth(m){selMonth=m;renderEntry();}
+function selectRot(r){selRot=r;document.querySelectorAll('.rot-option').forEach(el=>{el.className='rot-option'+(el.textContent.trim()===r?' selected':'');});}
+function toggleHalf(){isHalf=!isHalf;updateHalfUI();}
+function updateHalfUI(){document.getElementById('half-toggle').className='toggle-track'+(isHalf?' on':'');document.getElementById('half-label').textContent=isHalf?(selRot?selRot+'/2':'yarım ay'):'tam ay';}
+function loadExistingEntry(){
+  const ex=data.find(r=>r.month===selMonth);
+  if(ex){if(!selRot)selRot=ex.rotation;isHalf=ex.half||false;document.getElementById('inp-ct').value=ex.ct||'';document.getElementById('inp-usg').value=ex.usg||'';document.getElementById('inp-mr').value=ex.mr||'';document.getElementById('inp-cr').value=ex.cr||'';document.getElementById('rot-options').innerHTML=ROTATIONS.map(r=>`<div class="rot-option${selRot===r?' selected':''}" onclick="selectRot('${r}')">${r}</div>`).join('');updateHalfUI();}
+  else{document.getElementById('inp-ct').value='';document.getElementById('inp-usg').value='';document.getElementById('inp-mr').value='';document.getElementById('inp-cr').value='';}
+}
+function saveEntry(){
+  if(!selMonth){showToast('⚠️ Ay seçin',true);return;}
+  if(!selRot){showToast('⚠️ Rotasyon seçin',true);return;}
+  const entry={month:selMonth,rotation:selRot,half:isHalf,ct:parseInt(document.getElementById('inp-ct').value)||0,usg:parseInt(document.getElementById('inp-usg').value)||0,mr:parseInt(document.getElementById('inp-mr').value)||0,cr:parseInt(document.getElementById('inp-cr').value)||0};
+  const idx=data.findIndex(r=>r.month===selMonth);
+  if(idx>=0){data[idx]=entry;showToast('✅ '+fmtMonth(selMonth)+' güncellendi');}
+  else{data.push(entry);data.sort((a,b)=>a.month.localeCompare(b.month));showToast('✅ '+fmtMonth(selMonth)+' kaydedildi');}
+  saveData(data);renderEntry();
+}
+
+function renderTable(){
+  const tbody=document.getElementById('table-body');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">Henüz kayıt yok</td></tr>';return;}
+  const sorted=[...data].sort((a,b)=>b.month.localeCompare(a.month));
+  tbody.innerHTML=sorted.map(r=>`<tr><td style="white-space:nowrap;font-size:11px;color:var(--muted)">${fmtMonth(r.month)}</td><td><span class="rot-pill${r.half?' half':''}">${r.rotation}${r.half?'/2':''}</span></td><td class="${r.ct?'num-ct':'num-zero'}">${r.ct||'—'}</td><td class="${r.usg?'num-usg':'num-zero'}">${r.usg||'—'}</td><td class="${r.mr?'num-mr':'num-zero'}">${r.mr||'—'}</td><td class="${r.cr?'num-cr':'num-zero'}">${r.cr||'—'}</td><td><button class="del-btn" onclick="deleteEntry('${r.month}')">✕</button></td></tr>`).join('');
+}
+function deleteEntry(month){if(!confirm(fmtMonth(month)+' kaydını silmek istediğinize emin misiniz?'))return;data=data.filter(r=>r.month!==month);saveData(data);renderTable();showToast('🗑️ '+fmtMonth(month)+' silindi');}
+
+initInstallBanner();
+renderDashboard();
+</script>
+</body>
+</html>
